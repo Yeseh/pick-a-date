@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum DayOfWeek {
+    monday
+    tuesday
+    wednesday
+    thursday
+    friday
+    saturday
+    sunday
+}
+
+enum PartOfDay {
+    none
+    morning
+    day
+    night
+}
+
+model PAD {
+    id                     Int         @id @default(autoincrement())
+    subject                String
+    rootDate               DateTime
+    minParticipants        Int
+    maxParticipants        Int
+    possibleDayParts       PartOfDay[]
+    possibleDays           DayOfWeek[]
+    answers                Answer[]
+    optionsAmount          Int
+    autoPickWhenMinReached Boolean     @default(false)
+    finished               Boolean     @default(false)
+    anonymous              Boolean     @default(false)
+    createdAt              DateTime    @default(now())
+    finishedAt             DateTime?
+}
+
+// Post: 
+//  Key: xldIkj1
+//  Subject: dinner
+//  Options: [
+//     maandag 26 aug: [[Day, Night], [Morning, Day], [None]]
+//]
+
+model Answer {
+    id            Int         @id @default(autoincrement())
+    padId         Int
+    dateKey       Int
+    submissionKey String
+    dayParts      PartOfDay[]
+    name          String
+
+    pad PAD @relation(fields: [padId], references: [id])
+}
