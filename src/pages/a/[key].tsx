@@ -1,14 +1,11 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
-import Link from "next/link";
 import { useRouter } from "next/router";
-
-type TechnologyCardProps = {
-  name: string;
-  description: string;
-  link: string;
-};
+import { Card } from "../../components/card";
+import { format } from "date-fns";
+import { PartOfDay } from "@prisma/client";
+import { dateEquals, dateOnly } from "../../utils";
 
 const Home: NextPage = () => {
   const router = useRouter();
@@ -29,33 +26,60 @@ const Home: NextPage = () => {
     );
   }
 
-  const answered = new Set(pad!.answers.map((a) => a.submissionKey) ?? []);
+  //TODO: Clean up this mess from here
+  const answered = new Set(
+    pad!.answers.map((a) => a.submissionKey + a.padId) ?? []
+  );
   // <dateKey-dayPart>: count
-  const answerCounts = new Map();
+  const answerCounts: Record<string, number> = {};
 
   for (const a of pad.answers) {
     for (const dp of a.dayParts.filter((d) => d !== "none")) {
-      const answerKey = `${a.dateKey}-${dp}`;
-      if (!answerCounts.has(answerKey)) {
-        answerCounts.set(answerKey, 1);
-        continue;
+      const answerKey = `${a.date.toISOString()}|${dp}`;
+
+      if (!answerCounts[answerKey]) {
+        answerCounts[answerKey] = 0;
       }
 
-      const currentValue = answerCounts.get(answerKey);
-      answerCounts.set(answerKey, currentValue + 1);
+      answerCounts[answerKey]++;
     }
   }
 
-  const finalCounts = [] as any[];
-  for (const [k, v] of answerCounts.entries()) {
-    finalCounts.push({ dateKey: k, count: v });
-  }
+  // TODO parameterize top count
+  const top3 = Object.entries({ ...answerCounts })
+    .sort((a, b) => {
+      if (a[1] > b[1]) return -1;
+      if (b[1] > a[1]) return 1;
+      return 0;
+    })
+    .slice(0, 3);
 
-  finalCounts.sort((a, b) => {
-    if (a > b) return -1;
-    if (b > a) return 1;
-    return 0;
-  });
+  const answerView = [] as any[];
+  for (const a of top3) {
+    const count = a[1] as number;
+    const keyParts = a[0]!.split("|");
+    const keyDate = dateOnly(new Date(keyParts[0]!));
+    const dayPart = keyParts[1];
+    const votes = pad.answers
+      .filter(
+        (a) =>
+          dateEquals(a.date, keyDate) &&
+          a.dayParts.includes(dayPart as PartOfDay)
+      )
+      .map((a) => a.name);
+
+    answerView.push({
+      key: a[0],
+      count,
+      percentage: Math.floor((count / answered.size) * 100),
+      dateFmt: format(keyDate, "eeee, MMMM do"),
+      voters: pad.anonymous
+        ? "This vote was anonymous"
+        : `Available: ${votes.join(", ")}`,
+    });
+    // Formatted-date : percentage votes [favorite!]
+    // People that voted available on that datepart (if not anonymous)
+  }
 
   return (
     <>
@@ -69,27 +93,21 @@ const Home: NextPage = () => {
           <span className="text-purple-300">{answered.size}</span>/
           {pad.maxParticipants} have signed up!
         </h3>
-        {finalCounts.map((c) => (
-          <h3
-            className="text-4xl md:text-[3rem] leading-normal font-extrabold text-gray-700"
-            key={c.dateKey}
-          >
-            {c.dateKey}: {c.count}
-          </h3>
+        <h3 className="text-4xl pb-6 md:text-[3rem] leading-normal font-extrabold text-gray-700">
+          Your top <span className="text-purple-300">3</span> so far:
+        </h3>
+        {answerView.map((c) => (
+          <div key={c.key}>
+            <div className="container w-80 pb-5">
+              <Card
+                name={`${c.dateFmt}: ${c.percentage}%`}
+                description={c.voters}
+              ></Card>
+            </div>
+          </div>
         ))}
       </main>
     </>
-  );
-};
-
-const Card = ({ name, description, link }: TechnologyCardProps) => {
-  return (
-    <Link href={link}>
-      <section className="flex flex-col justify-center p-6 duration-500 border-2 border-gray-500 rounded shadow-xl motion-safe:hover:scale-105">
-        <h2 className="text-lg text-gray-700">{name}</h2>
-        <p className="text-sm text-gray-600">{description}</p>
-      </section>
-    </Link>
   );
 };
 

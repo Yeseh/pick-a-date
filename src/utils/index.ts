@@ -30,7 +30,15 @@ export const checkedToValueMapper = (values: any[]) => {
     }
   }
 } 
-  
+
+export const dateOnly = (date: Date) => {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+export const dateEquals = (a: Date, b: Date) => {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
 export const setCheckboxArray = (
     e: ChangeEvent<HTMLInputElement>,
     arr: boolean[],

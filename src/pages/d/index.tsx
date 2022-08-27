@@ -65,7 +65,7 @@ const Page: NextPage = () => {
       autoPickWhenMinReached: formData.autoPick,
     });
 
-    await router.replace(red.redirect);
+    await router.push(red.redirect);
   };
 
   return (

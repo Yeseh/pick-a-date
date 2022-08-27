@@ -1,6 +1,5 @@
 import { createRouter } from "./context";
 import { z } from "zod";
-import { dateToDateId } from "../../utils"
 
 const partOfDay = z.enum(["morning", "day", "night", "none"])
 const dayOfWeek = z.enum([
@@ -86,13 +85,13 @@ export const padRouter = createRouter()
         now.getFullYear(),
         now.getMonth(),
         now.getDate(), now.getMilliseconds()).concat()
-      console.log({submissionKey})
+
       for (const answer of input.answers) {
         answers.push({
           padId,
           submissionKey,
           name: input.name,
-          dateKey: dateToDateId(answer.date),
+          date: answer.date,
           dayParts: answer.dayParts
         })
       }

@@ -54,7 +54,7 @@ model PAD {
 model Answer {
     id            Int         @id @default(autoincrement())
     padId         Int
-    dateKey       Int
+    date          DateTime
     submissionKey String
     dayParts      PartOfDay[]
     name          String

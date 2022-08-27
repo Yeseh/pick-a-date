@@ -5,6 +5,7 @@ import { dayKeys } from "../utils";
 import { add } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { Card } from "../components/card";
 
 type CardProps = {
   name: string;
@@ -22,6 +23,7 @@ const templates = {
     maxParticipants: 4,
     optionsAmount: 7,
     autoPickWhenMinReached: false,
+    anonymous: true,
   },
   hotDate: {
     subject: "Date Night",
@@ -32,6 +34,7 @@ const templates = {
     maxParticipants: 2,
     optionsAmount: 3,
     autoPickWhenMinReached: false,
+    anonymous: false,
   },
   weekendLunch: {
     subject: "Weekend Lunch",
@@ -42,6 +45,7 @@ const templates = {
     maxParticipants: 0,
     optionsAmount: 4,
     autoPickWhenMinReached: false,
+    anonymous: true,
   },
 };
 
@@ -95,24 +99,25 @@ const TemplateCard = ({ name, description, template }: CardProps) => {
     const tpl = templates[template];
     if (tpl) {
       const red = await createPad.mutateAsync(tpl);
-      router.replace(red.redirect);
+      await router.push(red.redirect);
     } else {
       alert("unknown template" + template);
     }
   };
 
-  const base = (
-    <section className="flex flex-col justify-center p-6 duration-500 border-2 border-gray-500 rounded shadow-xl motion-safe:hover:scale-105">
-      <h2 className="text-lg text-gray-700">{name}</h2>
-      <p className="text-sm text-gray-600">{description}</p>
-    </section>
-  );
-
   if (template) {
-    return <a onClick={(e) => createTemplate(template)}>{base}</a>;
+    return (
+      <a onClick={(e) => createTemplate(template)}>
+        <Card name={name} description={description} />
+      </a>
+    );
   }
 
-  return <Link href="/d">{base}</Link>;
+  return (
+    <Link href="/d">
+      <Card name={name} description={description} />
+    </Link>
+  );
 };
 
 export default Home;

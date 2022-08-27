@@ -9,6 +9,15 @@ import { dayPartKeys } from "../../utils";
 
 type DayPart = "morning" | "day" | "night" | "none";
 
+const useInput = (def) => {
+  const [value, setValue] = useState(def);
+  const onChange = (e) => setValue(e.target.value);
+  return {
+    value,
+    onChange,
+  };
+};
+
 const getDateCheck = (dayname: string): ((date: Date) => boolean) => {
   const key = `is${capitalize(dayname)}`;
   const fn = (dateFns as any)[key];
@@ -47,8 +56,7 @@ type Answer = {
 const Page: NextPage = () => {
   const router = useRouter();
   const { key } = router.query as { key: string };
-
-  const [name, setName] = useState("Anonymous");
+  const nameInput = useInput("anonymous");
   const [answers, setAnswers] = useState([] as Answer[]);
   const getPad = trpc.useQuery(["pad.get", { key }]);
   const saveAnswers = trpc.useMutation("pad.answer");
@@ -89,15 +97,14 @@ const Page: NextPage = () => {
   // setAnswers(newAnswers);
 
   const onSubmitAnswer = async () => {
-    console.log(answers);
     if (answers.length === dates.length) {
       const data = {
-        name,
+        name: nameInput.value,
         key,
         answers,
       };
       const red = await saveAnswers.mutateAsync(data);
-      await router.replace(red.redirect);
+      await router.push(red.redirect);
     } else {
       alert("Not every question is answered");
     }
@@ -117,11 +124,11 @@ const Page: NextPage = () => {
         </h1>
         <div>
           <input
+            {...nameInput}
             id="nameInput"
-            value={name}
             type="text"
+            value={nameInput.value}
             disabled={pad?.anonymous ?? true}
-            onChange={(e) => setName}
           />
         </div>
         {dates.map((date, idx) => (
